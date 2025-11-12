@@ -149,7 +149,6 @@ http://localhost:8501
 ---
 
 ## Challenges Faced
-- Challenge	Cause	Solution
 - Protobuf errors	TensorFlow 2.10 incompatible with protobuf ≥4.x	Pin protobuf==3.19.6
 - GPU memory limits	GTX 1650 (4 GB)	Reduce batch size; pre-extract and stream features
 - Shape mismatch	Encoder/decoder spatial sizes differ	Align with tf.image.resize() in testing
@@ -159,7 +158,6 @@ http://localhost:8501
 ---
 
 ## Technical Specifications
-- Component	Description
 - Encoder	VGG16 pretrained on ImageNet (block3_conv3 output)
 - Decoder	Conv2DTranspose + BatchNorm + ReLU (lightweight)
 - Feature Input	(32 × 32 × 256)
