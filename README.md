@@ -84,10 +84,10 @@ Images resized to 224×224 and normalized to [0, 1].
 
 ```text
 D:/Datasets/CelebA-HQ/
-├── class1/
+├── train/
 │   ├── image_00001.jpg
 │   ├── ...
-└── class2/
+└── val/
     ├── image_15001.jpg
     ├── ...
 ```
