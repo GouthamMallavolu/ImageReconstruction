@@ -34,7 +34,7 @@ opencv-project/
 │   └── test_model.py           # Evaluates reconstruction quality
 │
 ├── app/
-│   └── ui_app_live.py          # Streamlit UI for upload + live camera reconstruction
+│   └── ui_app.py          # Streamlit UI for upload + live camera reconstruction
 │
 ├── models/
 │   └── decoder_checkpoints/
