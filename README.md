@@ -143,7 +143,8 @@ http://localhost:8501
 ---
 
 ## Results
-Original	Reconstructed
+<img width="600" height="300" alt="comparison_2" src="https://github.com/user-attachments/assets/a9336280-dfad-41a6-a64f-382fb78ca631" />
+<img width="600" height="300" alt="comparison_4" src="https://github.com/user-attachments/assets/6d7727bf-2cd2-4041-9380-15673028210c" />
 
 ---
 
