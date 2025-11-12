@@ -1,0 +1,11 @@
+tensorflow==2.10.0
+protobuf==3.19.6
+streamlit==1.18.0
+streamlit-webrtc==0.47.1
+altair==4.2.2
+vega-datasets
+numpy
+pillow
+opencv-python
+scikit-image
+matplotlib
