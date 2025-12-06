@@ -1,0 +1,41 @@
+Week 3 – Evaluation, Metrics & Visualization
+
+* Implemented proper testing & evaluation scripts.
+* Computed quantitative metrics (MSE, PSNR, SSIM).
+* Visualized reconstructions and training curves.
+
+* Implemented test_model.py:
+    * Loaded the decoder weights (decoder_final.h5).
+    * Built the same encoder architecture and kept it frozen.
+    * Ran:
+        * encoded = encoder(images)
+        * reconstructed = decoder(encoded)
+    * Handled issues with shapes:
+        * Ensured decoder input shape matched the actual encoder output (56, 56, 256).
+        * Fixed mismatches like (32, 32, 256) vs (56, 56, 256) by ensuring consistent build paths.
+* Implemented metrics:
+    * MSE: per-image mean squared error.
+    * PSNR: using skimage.metrics.peak_signal_noise_ratio.
+    * SSIM: using skimage.metrics.structural_similarity with:
+        * data_range=1.0 (since we normalized to [0, 1])
+        * channel_axis=-1 (for RGB)
+    * Resolved SSIM error:
+        * ValueError: must specify data_range → fixed by setting data_range=1.0.
+* Implemented evaluate.py (final version):
+    * Evaluates on a configurable number of samples (--num-samples).
+    * Computes per-image MSE / PSNR / SSIM.
+    * Saves:
+        * metrics_summary.json with mean/std of all metrics.
+        * Histograms: psnr_histogram.png, ssim_histogram.png.
+        * Sample grid: sample_reconstructions.png.
+        * Training loss curve: training_loss_curve.png (if loss_history.json exists).
+* Training visualization in train.py:
+    * Saved loss_history.json.
+    * Saved and plotted loss_curve.png.
+
+Challenges Faced:
+* Memory warnings during evaluation:
+    * Some GPU memory fragmentation warnings; mitigated by modest batch sizes and prefetch.
+* At this stage, reconstructions:
+    * Had correct global structure (pose, approximate face).
+    * Still fairly blurry / washed out, especially in background and fine details.

@@ -1,0 +1,30 @@
+Week 1 – Problem Definition & Dataset Setup
+* Select and prepare a suitable face dataset.
+* Clarified overall pipeline:
+    * Use a frozen encoder (pretrained CNN) to extract feature maps.
+    * Train a lightweight decoder to reconstruct the original 224×224 RGB image from those features.
+* Evaluated dataset options:
+    * ILSVRC2012 (ImageNet) – large and generic, but heavy to download and process.
+    * CelebA vs CelebA-HQ – face-centric, higher resolution, widely used for generative/reconstruction work.
+* Chose CelebA-HQ as the main dataset (better suited for facial reconstruction, controlled domain).
+* Set up the project structure (early version):
+
+
+
+CAP6415-Project-ImageReconstruction/
+* ├── main.py
+* ├── src/
+* │   ├── encoder.py
+* │   ├── decoder.py
+* │   ├── dataset.py
+* │   ├── train.py
+* │   ├── test_model.py
+* │   └── extract_features.py (initial attempt)
+* └── data/
+*     └── celeba_hq/  (organized into subfolders or directly as images)
+
+* Implemented dataset.py:
+    * Used tf.keras.utils.image_dataset_from_directory to load images.
+    * Implemented resizing to 224×224, conversion to float32 in [0, 1], and batching.
+    * Verified the loader by running a standalone script:
+        * Checked batch shapes (B, 224, 224, 3) and pixel value ranges.

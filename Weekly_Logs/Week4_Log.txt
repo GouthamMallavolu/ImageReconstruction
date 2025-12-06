@@ -1,0 +1,41 @@
+Week 4 – Loss Improvements, Fine-tuning & UI Development
+
+* Improved reconstruction quality without radically increasing decoder size.
+* Fine-tuned from existing decoder weights instead of starting from scratch.
+* Build an interactive Streamlit UI (image upload + live reconstruction).
+
+* Enhanced loss function in train.py:
+    * Replaced pure MAE/MSE with MAE + SSIM combined loss:
+    * Compiled autoencoder with loss=ssim_l1_loss.
+
+* Fine-tuning from existing decoder weights:
+    * In train_model, after building the autoencoder, tried to load:
+
+* decoder.load_weights("src/models/decoder_checkpoints/decoder_final.h5")
+    * If found, training continued from the previous decoder, improving quality without discarding prior learning.
+
+* Adjusted training schedule:
+    * Increased steps_per_epoch_max to let the model see more unique batches.
+    * Ran for more epochs (e.g., 30–50), saving:
+        * Updated decoder_final.h5
+        * Updated loss curves.
+* Developed Streamlit UI (app/ui_app.py):
+    * Image upload mode:
+        * Users upload a JPG/PNG.
+        * Image is resized to 224×224, normalized.
+        * Forward pass through encoder → decoder.
+        * UI shows Original vs Reconstruction side-by-side.
+        * Displays MSE / PSNR / SSIM for that single image.
+    * Model loading:
+        * Rebuilt encoder & decoder architectures in the UI.
+        * Used decoder.load_weights(...) (weights-only) instead of load_model, fixing the "No model config found" error.
+
+Challenges Faced
+* TensorFlow + NumPy + protobuf compatibility (especially on macOS with Apple Silicon):
+    * Needed a carefully pinned requirements.txt:
+        * tensorflow-macos==2.10.0
+        * tensorflow-metal==0.7.0
+        * numpy==1.23.5
+        * ml-dtypes==0.2.0
+        * protobuf==3.19.6
+    * Resolved _ARRAY_API not found, descriptor errors, and NumPy 2.x incompatibility by downgrading to compatible versions.

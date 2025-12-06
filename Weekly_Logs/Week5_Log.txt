@@ -1,0 +1,40 @@
+Week 5 – Webcam Demo, API Updates & Final Polishing
+
+* Added a live webcam reconstruction demo.
+* Updated to the latest streamlit-webrtc API (avoid deprecation spam).
+* Polished evaluation, training, and UI for final project delivery.
+
+* Implemented webcam mode in the UI using streamlit-webrtc:
+    * At first used VideoTransformerBase + transform():
+        * Triggered deprecation warnings:
+            * video_transformer_factory is deprecated
+            * transform() is deprecated. Implement recv() instead.
+    * Updated to the new API:
+        * Switched to VideoProcessorBase.
+        * Implemented recv():
+
+* Fine-tuned README / documentation:
+    * Added:
+        * Project description.
+        * Environment setup steps.
+        * How to train, evaluate, and run the UI.
+        * Explanation of metrics and architecture.
+
+Challenges Faced:
+* Webcam mode is more demanding and depends on:
+    * Working streamlit-webrtc.
+    * av package.
+    * Browser permissions for camera.
+* Reconstruction quality is still bounded by:
+    * Small decoder capacity (by design).
+    * Frozen encoder not optimized specifically for reconstruction.
+
+Final Results:
+* Final end-to-end system:
+    * Training (train.py) with advanced loss and fine-tuning.
+    * Evaluation (evaluate.py) with detailed metrics and plots.
+    * Testing (test_model.py) for spot-checking reconstructions.
+    * UI (ui_app.py) with:
+        * Image upload reconstruction.
+        * Live webcam reconstruction.
+    * Interactive demo via Streamlit.

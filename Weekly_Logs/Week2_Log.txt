@@ -1,0 +1,29 @@
+Week 2 – Model Design, Feature Extraction & Training Pipeline
+* Designed encoder & decoder architectures.
+* Implemented and debug initial training pipeline.
+* Investigated and resolve memory and shape issues.
+
+* Implemented encoder (encoder.py):
+    * Used a pretrained CNN backbone (e.g., ResNet-like / small CNN) to produce a feature map of shape roughly (56, 56, 256) from 224×224 inputs.
+    * Froze encoder weights (encoder.trainable = False) to keep the project small and focused on the decoder.
+* Implemented the first version of the decoder (decoder.py):
+    * Mirror structure with upsampling + conv layers.
+    * Added simple residual blocks to increase capacity while staying “small”.
+* Early idea: precompute features:
+    * extract_features.py used encoder to transform all images to feature tensors and save feat_.npy and img_.npy.
+    * Hit serious RAM limitations:
+        * Concatenating huge feature arrays → Unable to allocate XX GiB errors.
+        * Realized that precomputing all features on disk and then loading all at once was not feasible on the hardware.
+* Switched strategy:
+    * Use an end-to-end autoencoder model:
+        * inputs -> encoder (frozen) -> decoder -> reconstructed image.
+    * Train using model.fit with a tf.data pipeline instead of manual loops and huge in-memory concatenations.
+
+Issues / Challenges
+* Several shape mismatches:
+    * Loss complained about [?, 448, 448, 3] vs [?, 224, 224, 3] at some point.
+    * Fixed by aligning decoder output strictly to 224×224×3.
+* Dataset cardinality and steps_per_epoch:
+    * Warning: "Your input ran out of data; interrupting training."
+    * Resolved by using .repeat() / controlled steps_per_epoch:
+        * Bounded steps_per_epoch (e.g., 200–400) to control training time.
