@@ -8,7 +8,6 @@ if PROJECT_ROOT not in sys.path:
 import os
 import tensorflow as tf
 
-# TODO: change this to your actual image folder
 DATA_DIR = "/Users/goutham/PycharmProjects/ComputerVision/dataset/celeba_hq"
 
 

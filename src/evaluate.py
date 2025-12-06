@@ -10,9 +10,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from skimage.metrics import peak_signal_noise_ratio as psnr, structural_similarity as ssim
 
-# -------------------------------------------------------------------------
-# Path setup so we can import project modules when running `python src/evaluate.py`
-# -------------------------------------------------------------------------
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -32,10 +30,7 @@ DEFAULT_WEIGHTS = "src/models/decoder_checkpoints/decoder_final.h5"
 DEFAULT_SAVE_DIR = "outputs/evaluation"
 IMG_SIZE = (224, 224)
 
-
-# -------------------------------------------------------------------------
-# GPU configuration
-# -------------------------------------------------------------------------
+#GPU
 def configure_gpu():
     gpus = tf.config.list_physical_devices("GPU")
     if gpus:
@@ -49,9 +44,7 @@ def configure_gpu():
         print("No GPU detected; running on CPU.")
 
 
-# -------------------------------------------------------------------------
-# Metric helpers
-# -------------------------------------------------------------------------
+#Metrics
 def compute_metrics(orig: np.ndarray, recon: np.ndarray) -> Tuple[float, float, float]:
     """
     Compute MSE, PSNR, SSIM for a single pair of images.
@@ -63,9 +56,7 @@ def compute_metrics(orig: np.ndarray, recon: np.ndarray) -> Tuple[float, float, 
     return mse_val, psnr_val, ssim_val
 
 
-# -------------------------------------------------------------------------
-# Plot helpers
-# -------------------------------------------------------------------------
+#Plotting
 def plot_histogram(values: List[float], title: str, xlabel: str, save_path: str):
     plt.figure(figsize=(6, 4))
     plt.hist(values, bins=30, alpha=0.8)
@@ -151,9 +142,7 @@ def plot_loss_curve(weights_path: str, save_dir: str):
     print(f"Saved training loss curve: {save_path}")
 
 
-# -------------------------------------------------------------------------
-# Main evaluation function
-# -------------------------------------------------------------------------
+
 def evaluate_decoder(
     weights_path: str = DEFAULT_WEIGHTS,
     num_samples: int = 200,
@@ -250,9 +239,7 @@ def evaluate_decoder(
 
     print(f"Processed {processed} images.")
 
-    # ---------------------------------------------------------------------
-    # Aggregate metrics
-    # ---------------------------------------------------------------------
+
     mse_mean = float(np.mean(mse_list)) if mse_list else float("nan")
     mse_std = float(np.std(mse_list)) if mse_list else float("nan")
     psnr_mean = float(np.mean(psnr_list)) if psnr_list else float("nan")
@@ -289,9 +276,6 @@ def evaluate_decoder(
         )
     print(f"Saved metrics summary to: {summary_path}")
 
-    # ---------------------------------------------------------------------
-    # Plots
-    # ---------------------------------------------------------------------
     if mse_list:
         plot_histogram(
             psnr_list,
@@ -318,9 +302,7 @@ def evaluate_decoder(
         plot_loss_curve(weights_path, save_dir)
 
 
-# -------------------------------------------------------------------------
-# CLI entry
-# -------------------------------------------------------------------------
+
 if __name__ == "__main__":
     import argparse
 
