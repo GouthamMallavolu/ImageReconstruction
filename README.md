@@ -612,7 +612,7 @@ combined with caching) that can cause "input ran out of data" warnings.
 1.  **Clone the repository**
 
     ``` {.bash language="bash"}
-    git clone <your_repo_url> CAP6415-Project-ImageReconstruction
+    git clone https://github.com/GouthamMallavolu/CAP6415-Project-ImageReconstruction
     cd CAP6415-Project-ImageReconstruction
     ```
 
