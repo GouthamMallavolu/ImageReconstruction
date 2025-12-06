@@ -8,210 +8,647 @@ It also includes a Streamlit-based user interface that allows you to upload or c
 
 ---
 
-## Overview
+# Introduction
 
-Deep CNNs learn hierarchical feature representations.  
-This work explores how much of the original image information can be recovered from those features.
+This project explores **image reconstruction from intermediate CNN
+feature maps** using a **small, resource-efficient decoder network**.
 
-**Objectives**
-- Extract intermediate CNN features from a pretrained encoder (VGG16).
-- Train a small, efficient decoder to reconstruct images from these features.
-- Provide an interactive web UI for real-time testing.
+-   The **encoder** is a frozen convolutional feature extractor.
 
----
+-   The **decoder** is a compact convolutional network trained to
+    reconstruct the original $224\times224$ RGB image from encoder
+    feature maps.
 
-## Repository Structure
+The project provides:
 
-```text
-opencv-project/
-│
-├── src/
-│   ├── dataset.py              # Loads and normalizes CelebA-HQ dataset
-│   ├── encoder.py              # Pretrained VGG16 feature extractor
-│   ├── decoder.py              # Lightweight CNN decoder
-│   ├── extract_features.py     # Extracts and saves features as .npy files
-│   ├── train.py                # Trains decoder using saved feature batches
-│   └── test_model.py           # Evaluates reconstruction quality
-│
-├── app/
-│   └── ui_app.py          # Streamlit UI for upload + live camera reconstruction
-│
-├── models/
-│   └── decoder_checkpoints/
-│       └── decoder_final.h5    # Trained decoder weights
-│
-├── data/
-│   └── features/               # Pre-extracted feature and image batches
-│
-├── results/                    # Sample reconstructed outputs
-│
-└── README.md
+-   A training pipeline (`train.py`) using Keras `model.fit`.
+
+-   A research-style evaluation script (`evaluate.py`) with MSE, PSNR,
+    SSIM, and plots.
+
+-   A test script (`test_model.py`) for quick sanity checks.
+
+-   A Streamlit UI (`ui_app.py`) for:
+
+    -   Image upload reconstruction.
+
+    -   Optional live webcam reconstruction.
+
+The focus is on using a **small decoder** under realistic compute and
+memory constraints (Apple Silicon, 16GB RAM), while maintaining
+reasonable reconstruction quality and providing a reproducible
+end-to-end workflow.
+
+# Project Goals and Motivation
+
+## Goals
+
+1.  **Feature-to-Image Reconstruction**\
+    Given an intermediate feature map from a CNN encoder, learn a
+    decoder that can reconstruct the original $224\times224$ RGB image.
+
+2.  **Small Network Constraint**\
+    Keep the decoder relatively small (hundreds of thousands of
+    parameters, not tens of millions), to:
+
+    -   Run on constrained hardware (e.g., Apple Silicon).
+
+    -   Demonstrate that reasonable reconstructions are possible with
+        limited capacity.
+
+3.  **End-to-End Workflow**
+
+    -   Robust training scripts (`train.py`).
+
+    -   Evaluation scripts (`evaluate.py`) with numerical metrics and
+        visualizations.
+
+    -   A UI (`ui_app.py`) for interactive demos.
+
+4.  **Reproducibility and Documentation**
+
+    -   Pinned environment.
+
+    -   Clear dataset assumptions.
+
+    -   Correct handling of dataset cardinality and steps per epoch.
+
+## Motivation
+
+Feature-to-image reconstruction is closely related to interpretability:
+it provides intuition about how much information intermediate feature
+maps retain. Small decoders are relevant in:
+
+-   Low-resource deployment scenarios.
+
+-   Privacy-related questions (how much can be reconstructed from shared
+    features).
+
+-   Educational contexts where hardware is limited.
+
+# Repository Structure
+
+The repository layout is:
+
+    CAP6415-Project-ImageReconstruction/
+    ├── main.py                         # Optional CLI entry-point (train, evaluate)
+    ├── requirements.txt                # Pinned environment for macOS + Apple Silicon
+    ├── README.md                       # Documentation
+    ├── src/
+    │   ├── encoder.py                  # Builds frozen encoder (feature extractor)
+    │   ├── decoder.py                  # Builds small decoder network
+    │   ├── dataset.py                  # CelebA-HQ loader (224×224, [0,1])
+    │   ├── train.py                    # Training script (Keras model.fit)
+    │   ├── test_model.py               # Sanity-check reconstruction script
+    │   └── evaluate.py                 # Evaluation: MSE/PSNR/SSIM + plots
+    ├── app/
+    │   └── ui_app.py                   # Streamlit UI: upload + webcam reconstruction
+    ├── data/
+    │   └── celeba_hq/                  # CelebA-HQ images (30,000)
+    └── outputs/
+        └── evaluation/                 # Metrics & plots from evaluate.py
+
+Additional runtime directories:
+
+-   `src/models/decoder_checkpoints/`: stores trained decoder weights
+    (e.g., `decoder_final.h5`).
+
+-   `outputs/eval_run*/`: stores evaluation metrics and figures.
+
+# Environment Setup
+
+## Target Platform
+
+-   OS: macOS (Apple Silicon).
+
+-   CPU/GPU: Apple Silicon (e.g., Apple M5) with Metal acceleration.
+
+-   Python: 3.10.
+
+-   DL Stack: `tensorflow-macos == 2.10.0` + `tensorflow-metal`.
+
+## Conda Environment
+
+Create and activate a dedicated environment:
+
+``` {.bash language="bash"}
+conda create -n CV python=3.10 -y
+conda activate CV
 ```
 
----
+## Python Dependencies
 
-## Environment Setup
-Step 1: Create and activate an environment
-```bash
-conda create -n OpenCV python=3.9
-conda activate OpenCV
-```
-Step 2: Install dependencies
-```bash
+From the project root:
+
+``` {.bash language="bash"}
 pip install -r requirements.txt
 ```
-or manually:
-```bash
-pip install tensorflow==2.10.0 protobuf==3.19.6 streamlit==1.18.0 streamlit-webrtc==0.47.1 altair==4.2.2 vega-datasets numpy pillow opencv-python scikit-image matplotlib
-```
-### Important:
-```text
-TensorFlow 2.10 requires protobuf<=3.19.x.
-Newer versions of protobuf (≥4.x) are incompatible and will raise descriptor-creation errors.
+
+Key pinned packages:
+
+-   `tensorflow-macos == 2.10.0`
+
+-   `tensorflow-metal == 0.7.0`
+
+-   `numpy == 1.23.5`
+
+-   `ml-dtypes == 0.2.0`
+
+-   `protobuf == 3.19.6`
+
+-   `opencv-python == 4.8.1.78`
+
+-   `scikit-image == 0.21.0`
+
+-   `matplotlib == 3.7.1`
+
+-   `streamlit == 1.22.0`
+
+-   `streamlit-webrtc`
+
+-   `altair == 4.2.2`, `vega-datasets == 0.9.0`
+
+-   `tqdm == 4.66.1`
+
+These versions avoid common compatibility issues such as NumPy /
+TensorFlow ABI mismatches and Protobuf descriptor errors.
+
+# Dataset: CelebA-HQ
+
+## Data Layout
+
+The project uses **CelebA-HQ**, a dataset of high-quality face images.
+Place the images as:
+
+    CAP6415-Project-ImageReconstruction/data/celeba_hq/
+        00001.png
+        00002.png
+        ...
+        (≈ 30,000 images)
+
+No class subfolders are required; the dataset is treated as a single
+pool of face images.
+
+## Dataset Loader (`dataset.py`)
+
+The loader uses `tf.keras.utils.image_dataset_from_directory` to:
+
+-   Read all images under `data/celeba_hq/`.
+
+-   Resize each image to $224\times224$.
+
+-   Normalize to $[0, 1]$ (float32).
+
+-   Batch them (default batch size is often 8).
+
+To verify:
+
+``` {.bash language="bash"}
+python src/dataset.py
 ```
 
----
+You should see:
 
-## Dataset
-```text
-CelebA-HQ Dataset
-30,000 high-resolution face images.
-Images resized to 224×224 and normalized to [0, 1].
+-   "Found 30000 files belonging to 1 classes."
+
+-   Batch shape: e.g. `(4, 224, 224, 3)`.
+
+-   Pixel range: `0.0 - 1.0`.
+
+## Dataset Cardinality
+
+Given:
+
+-   $N = 30,000$ images.
+
+-   Batch size $B = 8$.
+
+Number of steps (batches) in one full epoch:
+
+$$
+n_{\text{batches}} = \left\lceil \frac{N}{B} \right\rceil
+= \left\lceil \frac{30000}{8} \right\rceil
+= 3750
+$$
+
+Thus, one epoch using the full dataset corresponds to 3750 training
+steps.
+
+# Model Architecture
+
+## Encoder (`encoder.py`)
+
+The encoder is a convolutional backbone used as a feature extractor:
+
+-   Input: $224\times224\times3$ RGB image.
+
+-   Output: feature map, typically $56\times56\times256$.
+
+-   During training: `encoder.trainable = False`.
+
+It approximates a precomputed feature extractor for feature-to-image
+reconstruction.
+
+## Decoder (`decoder.py`)
+
+The decoder is a **small CNN**:
+
+-   Input: encoder features, e.g., $56\times56\times256$.
+
+-   Output: reconstructed image, $224\times224\times3$.
+
+-   Uses upsampling (e.g., `UpSampling2D` + `Conv2D`) and residual
+    blocks.
+
+-   Final layer: `Conv2D(3, kernel_size=3, activation="sigmoid")` to map
+    to $[0,1]$.
+
+The total parameter count is kept in the order of a few hundred thousand
+parameters.
+
+## Autoencoder Assembly
+
+The autoencoder combines encoder and decoder:
+
+$$x \in \mathbb{R}^{224\times224\times3}
+\quad\rightarrow\quad
+f(x) \in \mathbb{R}^{56\times56\times256}
+\quad\rightarrow\quad
+\hat{x} \in \mathbb{R}^{224\times224\times3},$$
+
+where:
+
+-   $f$ is the frozen encoder.
+
+-   The decoder is trainable.
+
+-   The training objective is to minimize the difference between $x$ and
+    $\hat{x}$.
+
+# Loss Function and Training Objective
+
+## Combined SSIM + L1 Loss
+
+The project uses a combination of mean absolute error (L1) and
+structural similarity (SSIM):
+
+``` {.python language="Python"}
+def ssim_l1_loss(y_true, y_pred, alpha=0.8):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+
+    l1 = tf.reduce_mean(tf.abs(y_true - y_pred))
+    ssim_val = tf.image.ssim(y_true, y_pred, max_val=1.0)
+    ssim_loss = 1.0 - tf.reduce_mean(ssim_val)
+
+    return alpha * l1 + (1.0 - alpha) * ssim_loss
 ```
----
 
-## Expected folder structure:
+-   L1 encourages pixel-wise accuracy.
 
-```text
-D:/Datasets/CelebA-HQ/
-├── train/
-│   ├── image_00001.jpg
-│   ├── ...
-└── val/
-    ├── image_15001.jpg
-    ├── ...
+-   SSIM focuses on structural similarity.
+
+-   $\alpha = 0.8$ gives more weight to L1 while retaining
+    structure-aware penalties.
+
+## Optimization
+
+The autoencoder is typically trained with the Adam optimizer and a
+modest learning rate to ensure stable convergence for the small decoder.
+
+# Training the Model
+
+## Using All 30,000 Images per Epoch
+
+Previous issues occurred when manually setting `steps_per_epoch = 1000`,
+which conflicted with the true cardinality and caused "Your input ran
+out of data" warnings.
+
+In the final configuration:
+
+-   One epoch uses the entire dataset ($3750$ batches).
+
+-   `steps_per_epoch` is either inferred or explicitly set to the
+    dataset cardinality.
+
+## Final Training Pattern
+
+``` {.python language="Python"}
+train_ds = load_celeba_hq(batch_size=batch_size)
+
+train_ds = train_ds.cache().shuffle(1000, seed=SEED).prefetch(tf.data.AUTOTUNE)
+
+history = autoencoder.fit(
+    train_ds,
+    epochs=EPOCHS,
+    callbacks=[checkpoint_cb],
+)
 ```
-### Training Pipeline
-Step 1: Feature Extraction
-Extract feature maps from the pretrained encoder and save them to disk.
 
-```bash
-python src/extract_features.py
-```
-### Saved files:
+Keras automatically infers:
 
-```text
-data/features/feat_00000.npy
-data/features/img_00000.npy
-...
+$$
+\mathrm{steps}_{\mathrm{per\ epoch}}
+= \left| \mathrm{train\ ds} \right|
+\approx 3750
+$$
+
+Alternatively, explicitly:
+
+``` {.python language="Python"}
+num_batches = int(train_ds.cardinality().numpy())  # ≈ 3750
+
+history = autoencoder.fit(
+    train_ds,
+    epochs=EPOCHS,
+    steps_per_epoch=num_batches,
+    callbacks=[checkpoint_cb],
+)
 ```
-Step 2: Train the Decoder
-```bash
+
+## Training Script Usage
+
+From the project root:
+
+``` {.bash language="bash"}
 python src/train.py
 ```
+The training will:
 
----
+-   Build encoder and decoder.
 
-## Output model:
+-   Freeze the encoder parameters.
 
-```text
-models/decoder_checkpoints/decoder_final.h5
+-   Compile the autoencoder using `ssim_l1_loss`.
+
+-   Load existing weights for fine-tuning, if available.
+
+-   Train for the specified number of epochs.
+
+-   Save:
+
+    -   `src/models/decoder_checkpoints/decoder_final.h5`
+
+    -   `loss_history.json`
+
+    -   `loss_curve.png`
+
+# Evaluation
+
+## Evaluation Script (`evaluate.py`)
+
+To evaluate the trained model:
+
+``` {.bash language="bash"}
+python src/evaluate.py \
+  --weights src/models/decoder_checkpoints/decoder_final.h5 \
+  --num-samples 300 \
+  --batch-size 8 \
+  --save-dir outputs/eval_run1
 ```
-Step 3: Evaluate Reconstruction
-```bash
+
+The script:
+
+1.  Builds encoder and decoder, loads decoder weights.
+
+2.  Samples images from CelebA-HQ.
+
+3.  Computes:
+
+    -   Mean squared error (MSE).
+
+    -   Peak signal-to-noise ratio (PSNR) with `data_range=1.0`.
+
+    -   Structural similarity (SSIM) with `data_range=1.0`,
+        `channel_axis=-1`.
+
+4.  Saves to `outputs/eval_run1/`:
+
+    -   `metrics_summary.json`: means and standard deviations; full
+        lists.
+
+    -   `psnr_histogram.png`, `ssim_histogram.png`.
+
+    -   `sample_reconstructions.png`: original vs reconstructed image
+        grid.
+
+    -   `training_loss_curve.png` (if loss history is present).
+
+## Quick Test (`test_model.py`)
+
+For a small sanity check:
+
+``` {.bash language="bash"}
 python src/test_model.py
 ```
 
----
+It:
 
-## Streamlit Web UI
-Run the Application
-```bash
-streamlit run app/ui_app.py
+-   Loads encoder and decoder with trained weights.
+
+-   Reconstructs a small batch of images.
+
+-   Prints basic metrics and may save a comparison figure.
+
+# Interactive UI
+
+## Streamlit App (`ui_app.py`)
+
+Start the UI:
+
+``` {.bash language="bash"}
+python -m streamlit run app/ui_app.py
 ```
 
-The app will open at:
+Open the local URL (e.g., `http://localhost:8501`).
 
-```arduino
-http://localhost:8501
-```
-### UI Features
-- Upload Mode: Upload a .jpg or .png image and view its reconstruction.
-- Live Camera Mode: Capture webcam input and view reconstructed frames in real time.
-- Output Intensity Slider: Adjust reconstruction brightness or scaling interactively.
+## Features
 
----
+#### Image Upload
 
-## Results
-<img width="600" height="300" alt="comparison_2" src="https://github.com/user-attachments/assets/a9336280-dfad-41a6-a64f-382fb78ca631" />
-<img width="600" height="300" alt="comparison_4" src="https://github.com/user-attachments/assets/6d7727bf-2cd2-4041-9380-15673028210c" />
+-   Upload a face image (JPG/PNG).
 
----
+-   The app resizes to $224\times224$, normalizes, runs encoder+decoder.
 
-## Challenges Faced
-- Protobuf errors	TensorFlow 2.10 incompatible with protobuf ≥4.x	Pin protobuf==3.19.6
-- GPU memory limits	GTX 1650 (4 GB)	Reduce batch size; pre-extract and stream features
-- Shape mismatch	Encoder/decoder spatial sizes differ	Align with tf.image.resize() in testing
-- Blurry reconstructions	MSE-only objective	Accept for small model; consider perceptual loss in future
-- Streamlit import error	Missing altair.vegalite.v4	Install altair==4.2.2
+-   Displays:
 
----
+    -   Original vs reconstructed images.
 
-## Technical Specifications
-- Encoder	VGG16 pretrained on ImageNet (block3_conv3 output)
-- Decoder	Conv2DTranspose + BatchNorm + ReLU (lightweight)
-- Feature Input	(32 × 32 × 256)
-- Image Output	(224 × 224 × 3)
-- Loss	Mean Squared Error (MSE)
-- Optimizer	Adam, learning rate = 1e-4
-- Hardware	NVIDIA GTX 1650 (4 GB), 16 GB RAM
-- Framework	TensorFlow 2.10 / Keras + Streamlit UI
+    -   MSE, PSNR, SSIM for the uploaded sample.
 
----
+#### Webcam Reconstruction (Optional)
 
-## Future Enhancements
-- Add perceptual loss (VGG-based) for sharper details.
-- Introduce skip connections (U-Net style) to preserve spatial fidelity.
-- Compute and display SSIM/PSNR inside the Streamlit UI.
-- Add a “download reconstructed image” button in the UI.
-- Optional deployment via Streamlit Cloud or Hugging Face Spaces.
+-   Uses `streamlit-webrtc` and `av`.
 
----
+-   Implements a `VideoProcessorBase` with a `recv()` method (current
+    API).
 
-## Requirements
-```text
-tensorflow==2.10.0
-protobuf==3.19.6
-streamlit==1.18.0
-streamlit-webrtc==0.47.1
-altair==4.2.2
-vega-datasets
-numpy
-pillow
-opencv-python
-scikit-image
-matplotlib
+-   Each frame is preprocessed, encoded, decoded, and rendered as a
+    reconstructed stream.
+
+# Reproducibility
+
+## Environment
+
+-   Python 3.10.
+
+-   Conda environment `CV`.
+
+-   Dependencies installed from `requirements.txt`.
+
+## Random Seeds
+
+In `train.py`, set seeds:
+
+``` {.python language="Python"}
+import random
+import numpy as np
+import tensorflow as tf
+
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
 ```
 
----
+Use the same seed for dataset shuffling:
 
-## Quick Start Guide
-```bash
-# 1) Extract CNN features
-python src/extract_features.py
-
-# 2) Train the lightweight decoder
-python src/train.py
-
-# 3) Evaluate image reconstruction
-python src/test_model.py
-
-# 4) Launch the Streamlit interface
-streamlit run app/ui_app.py
+``` {.python language="Python"}
+train_ds = train_ds.shuffle(1000, seed=SEED)
 ```
 
-Once the Streamlit server starts:
+Note that full bitwise determinism may not be guaranteed on GPU/Metal,
+but this significantly stabilizes the training outcome.
 
-```arduino
-http://localhost:8501
-```
+## Dataset Consistency
+
+To reproduce results:
+
+-   Use the same CelebA-HQ dataset in `data/celeba_hq/`.
+
+-   Do not change the number or identity of images.
+
+## Training Hyperparameters
+
+Keep fixed:
+
+-   `batch_size` (e.g., 8).
+
+-   Number of epochs (e.g., 30).
+
+-   Encoder and decoder architectures.
+
+-   Loss function (`ssim_l1_loss`, same $\alpha$).
+
+-   Learning rate and optimizer.
+
+## Steps per Epoch
+
+Ensure each epoch uses the full dataset:
+
+-   Recommended: do *not* set `steps_per_epoch`; let Keras infer it from
+    dataset cardinality.
+
+-   Alternatively: set
+    `steps_per_epoch = int(train_ds.cardinality().numpy())`
+    (approximately 3750).
+
+Avoid contradictory manual settings (e.g., too small `steps_per_epoch`
+combined with caching) that can cause "input ran out of data" warnings.
+
+# Limitations and Future Work
+
+## Current Limitations
+
+-   **Small Decoder**:
+
+    -   The constrained decoder limits reconstruction sharpness compared
+        to large decoders or GANs.
+
+-   **Face-Only Training**:
+
+    -   Trained only on CelebA-HQ faces; generalization to non-face data
+        is limited.
+
+-   **Fixed Resolution**:
+
+    -   Only supports $224\times224$ images in the current
+        configuration.
+
+-   **No Adversarial Loss**:
+
+    -   Reconstructions may appear over-smoothed compared to GAN-based
+        methods.
+
+## Future Extensions
+
+-   Slightly deeper decoder while keeping it "small" overall.
+
+-   Additional perceptual loss terms, e.g., VGG-based perceptual loss.
+
+-   Explore reconstruction from different encoder layers (early vs deep
+    features).
+
+-   Multi-resolution outputs and multi-scale training.
+
+-   Enhanced UI:
+
+    -   Compare different checkpoints.
+
+    -   Visualize error maps.
+
+    -   Toggle between different loss configurations.
+
+# End-to-End Usage Summary
+
+1.  **Clone the repository**
+
+    ``` {.bash language="bash"}
+    git clone <your_repo_url> CAP6415-Project-ImageReconstruction
+    cd CAP6415-Project-ImageReconstruction
+    ```
+
+2.  **Set up the environment**
+
+    ``` {.bash language="bash"}
+    conda create -n CV python=3.10 -y
+    conda activate CV
+    pip install -r requirements.txt
+    ```
+
+3.  **Prepare the dataset**
+
+    -   Place CelebA-HQ images under `data/celeba_hq/`.
+
+4.  **Verify the dataset loader**
+
+    ``` {.bash language="bash"}
+    python src/dataset.py
+    ```
+
+5.  **Train the model**
+
+    ``` {.bash language="bash"}
+    python src/train.py
+    ```
+
+6.  **Evaluate the model**
+
+    ``` {.bash language="bash"}
+    python src/evaluate.py \
+      --weights src/models/decoder_checkpoints/decoder_final.h5 \
+      --num-samples 300 \
+      --batch-size 8 \
+      --save-dir outputs/eval_run1
+    ```
+
+7.  **Run the UI**
+
+    ``` {.bash language="bash"}
+    python -m streamlit run app/ui_app.py
+    ```
+
+Following these steps with the pinned environment, dataset layout, and
+scripts will reproduce the training behavior, evaluation metrics, and
+interactive demo for image reconstruction from CNN features using a
+small decoder network.
