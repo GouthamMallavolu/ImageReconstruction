@@ -639,6 +639,8 @@ combined with caching) that can cause "input ran out of data" warnings.
     ``` {.bash language="bash"}
     python src/train.py
     ```
+    <img width="1512" height="982" alt="Screenshot 2025-12-06 at 12 16 57 PM" src="https://github.com/user-attachments/assets/2f55fd8b-c02b-4156-8c8e-a1c83e53175e" />
+
 
 6.  **Evaluate the model**
 
