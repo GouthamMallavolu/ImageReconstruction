@@ -657,6 +657,8 @@ combined with caching) that can cause "input ran out of data" warnings.
     ``` {.bash language="bash"}
     python -m streamlit run app/ui_app.py
     ```
+    <img width="3024" height="1964" alt="image" src="https://github.com/user-attachments/assets/53ffef9b-fd31-4c88-99d7-80e286b54220" />
+
 
 Following these steps with the pinned environment, dataset layout, and
 scripts will reproduce the training behavior, evaluation metrics, and
