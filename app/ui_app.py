@@ -7,9 +7,7 @@ import tensorflow as tf
 from PIL import Image
 from skimage.metrics import peak_signal_noise_ratio as psnr, structural_similarity as ssim
 
-# -----------------------------------------------------------------------------
-# Path setup so we can import from src when running via `streamlit run`
-# -----------------------------------------------------------------------------
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -22,9 +20,7 @@ MODEL_PATH = "src/models/decoder_checkpoints/decoder_final.h5"
 IMG_SIZE = (224, 224)
 
 
-# -----------------------------------------------------------------------------
-# GPU configuration
-# -----------------------------------------------------------------------------
+#GPU
 def configure_gpu():
     gpus = tf.config.list_physical_devices("GPU")
     if gpus:
@@ -38,9 +34,7 @@ def configure_gpu():
         print("No GPU detected; running on CPU.")
 
 
-# -----------------------------------------------------------------------------
-# Model loading
-# -----------------------------------------------------------------------------
+#Model
 @st.cache_resource
 def load_models():
     """
@@ -72,9 +66,7 @@ def load_models():
     return encoder, decoder
 
 
-# -----------------------------------------------------------------------------
-# Helper functions
-# -----------------------------------------------------------------------------
+#Helper functions
 def preprocess_pil_image(pil_img: Image.Image) -> np.ndarray:
     """
     Convert a PIL image to a normalized float32 array of shape (224, 224, 3)
@@ -110,9 +102,8 @@ def compute_metrics(orig: np.ndarray, recon: np.ndarray):
     return mse_val, psnr_val, ssim_val
 
 
-# -----------------------------------------------------------------------------
-# UI: image upload
-# -----------------------------------------------------------------------------
+#UI-Image upload
+
 def image_upload_ui(encoder, decoder):
     st.subheader("Image Upload")
 
@@ -145,9 +136,8 @@ def image_upload_ui(encoder, decoder):
     )
 
 
-# -----------------------------------------------------------------------------
-# UI: webcam (optional, using new streamlit-webrtc API)
-# -----------------------------------------------------------------------------
+#UI-webcam
+
 def webcam_ui(encoder, decoder):
     """
     Optional webcam demo using streamlit-webrtc (new API).
@@ -188,14 +178,12 @@ def webcam_ui(encoder, decoder):
 
     webrtc_streamer(
         key="reconstruction-webcam",
-        video_processor_factory=ReconstructionProcessor,  # new API
+        video_processor_factory=ReconstructionProcessor,
         media_stream_constraints={"video": True, "audio": False},
     )
 
 
-# -----------------------------------------------------------------------------
-# Main entry
-# -----------------------------------------------------------------------------
+
 def main():
     st.set_page_config(
         page_title="Feature-based Image Reconstruction",
