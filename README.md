@@ -556,6 +556,14 @@ Ensure each epoch uses the full dataset:
 Avoid contradictory manual settings (e.g., too small `steps_per_epoch`
 combined with caching) that can cause "input ran out of data" warnings.
 
+# Testing model performance
+<img width="2310" height="978" alt="image" src="https://github.com/user-attachments/assets/68f4bb0a-dde1-4044-8504-2cd9028ed001" />
+
+# Model Evaluation
+<img width="1090" height="780" alt="image" src="https://github.com/user-attachments/assets/41d7de51-4bc8-4f6c-8833-655a076a704a" />
+<img width="1060" height="790" alt="image" src="https://github.com/user-attachments/assets/dea419e1-dcaf-489b-8289-56bdb65ac18d" />
+<img width="1092" height="792" alt="image" src="https://github.com/user-attachments/assets/ef629e0e-b218-480c-b153-18707fc4c120" />
+
 # Limitations and Future Work
 
 ## Current Limitations
