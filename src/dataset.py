@@ -1,34 +1,58 @@
-import tensorflow as tf
 import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+import os
+import tensorflow as tf
+
+# TODO: change this to your actual image folder
+DATA_DIR = "/Users/goutham/PycharmProjects/ComputerVision/dataset/celeba_hq"
 
 
-def load_celeba_hq(batch_size=8, shuffle=True):
+def load_celeba_hq(batch_size=8, img_size=(224, 224)):
     """
-    Load the CelebA-HQ dataset and normalize images to [0, 1].
-    Directory structure:
-        D:/Datasets/CelebA-HQ/
-            ├── class1/
-            └── class2/
-    (Classes are ignored for this task.)
-    """
-    data_dir = "D:/opencv-project/dataset/celeba_hq"
-    if not os.path.exists(data_dir):
-        raise FileNotFoundError(f"Dataset path not found: {data_dir}")
+    Loads CelebA-HQ (or any image folder) as a tf.data.Dataset.
 
-    IMG_SIZE = (224, 224)
+    Expected structure:
+
+        DATA_DIR/
+            any_class_name/
+                img1.jpg
+                img2.jpg
+            another_class/
+                img3.jpg
+                ...
+
+    Labels are ignored; we only care about images.
+    """
+
+    if not os.path.isdir(DATA_DIR):
+        raise FileNotFoundError(
+            f"DATA_DIR does not exist: {DATA_DIR}\n"
+            f"Please update DATA_DIR in src/dataset.py."
+        )
+
     ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        image_size=IMG_SIZE,
+        DATA_DIR,
+        labels=None,
+        label_mode=None,
+        image_size=img_size,
         batch_size=batch_size,
-        shuffle=shuffle
-    ).map(lambda x, y: (tf.cast(x, tf.float32) / 255.0, y))
+        shuffle=True,
+    )
 
+    # Normalize to [0,1]
+    ds = ds.map(lambda x: tf.cast(x, tf.float32) / 255.0)
+    ds = ds.prefetch(tf.data.AUTOTUNE)
     return ds
 
 
 if __name__ == "__main__":
     print("Testing dataset loader...")
-    ds = load_celeba_hq(batch_size=4)
-    images, _ = next(iter(ds))
-    print("Loaded batch shape:", images.shape)
-    print("Pixel range:", tf.reduce_min(images).numpy(), "-", tf.reduce_max(images).numpy())
+    ds = load_celeba_hq(batch_size=4, img_size=(224, 224))
+    batch = next(iter(ds))
+    print("Loaded batch shape:", batch.shape)
+    print("Pixel range:", tf.reduce_min(batch).numpy(), "-", tf.reduce_max(batch).numpy())

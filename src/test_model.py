@@ -1,90 +1,141 @@
 import os
+import sys
+
+# Make project root importable when running this file directly
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from skimage.metrics import structural_similarity as ssim, peak_signal_noise_ratio as psnr
+from skimage.metrics import peak_signal_noise_ratio as psnr, structural_similarity as ssim
+
 from src.encoder import build_encoder
 from src.decoder import build_decoder
 from src.dataset import load_celeba_hq
 
 
-def test_decoder(model_path="models/decoder_checkpoints/decoder_final.h5",
-                 num_samples=4,
-                 save_dir="results"):
-    """Evaluate trained decoder on CelebA-HQ samples."""
-    gpus = tf.config.list_physical_devices('GPU')
+def configure_gpu():
+    gpus = tf.config.list_physical_devices("GPU")
     if gpus:
-        tf.config.experimental.set_memory_growth(gpus[0], True)
-        print("GPU detected: memory growth enabled.")
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+            print("GPU detected: memory growth enabled.")
+        except Exception as e:
+            print("Could not set memory growth:", e)
     else:
-        print("No GPU detected. Running on CPU.")
+        print("No GPU detected; running on CPU.")
 
-    decoder = tf.keras.models.load_model(model_path, compile=False)
+
+def test_decoder(
+    model_dir="/Users/goutham/PycharmProjects/ComputerVision/src/models/decoder_checkpoints",
+    num_samples=4,
+    save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/results/test_run",
+):
+    """
+    Load the trained encoder + decoder, run reconstruction on a few images,
+    compute PSNR/SSIM, and save side-by-side comparison plots.
+    """
+    configure_gpu()
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    # ----- Build encoder/decoder -----
+    print("Building encoder...")
     encoder = build_encoder()
     encoder.trainable = False
 
-    test_ds = load_celeba_hq(batch_size=num_samples, shuffle=False)
-    test_images, _ = next(iter(test_ds))
+    enc_feature_shape = encoder.output_shape[1:]
+    print("Encoder feature shape:", enc_feature_shape)
 
-    encoded = encoder(test_images)
-    # Resize encoder output to match decoder input
-    encoded_resized = tf.image.resize(encoded, (32, 32))
-    reconstructed = decoder(encoded_resized)
-    # Resize decoder output to match original image size
-    reconstructed = tf.image.resize(reconstructed, (224, 224))
-    reconstructed = tf.clip_by_value(reconstructed, 0.0, 1.0)
+    print("Building decoder...")
+    decoder = build_decoder(input_shape=enc_feature_shape)
 
-    test_images_np = test_images.numpy()
+    # ----- Load decoder weights -----
+    weight_path = os.path.join(model_dir, "decoder_final.h5")
+    if not os.path.isfile(weight_path):
+        raise FileNotFoundError(
+            f"Decoder weights not found at: {weight_path}\n"
+            f"Make sure you have trained the model and saved decoder_final.h5."
+        )
+
+    decoder.load_weights(weight_path)
+    print(f"Loaded decoder weights from: {weight_path}")
+
+    # ----- Load a small batch of test images -----
+    print("Loading test images...")
+    test_ds = load_celeba_hq(batch_size=num_samples, img_size=(224, 224))
+
+    # Take one batch
+    batch = next(iter(test_ds))
+
+    # IMPORTANT: handle (images,) or (images, labels) tuples
+    if isinstance(batch, tuple):
+        images = batch[0]
+    else:
+        images = batch
+
+    test_images = images.numpy()  # shape (B, 224, 224, 3), range [0,1]
+    print(f"Test batch shape: {test_images.shape}")
+
+    # ----- Forward pass: encoder -> decoder (NO resizing of features) -----
+    print("Running encoder + decoder...")
+    encoded = encoder(test_images, training=False)          # (B, Hf, Wf, Cf) e.g. (B,56,56,256)
+    reconstructed = decoder(encoded, training=False)        # (B, 224, 224, 3)
+
     reconstructed_np = reconstructed.numpy()
+    print(f"Reconstructed shape: {reconstructed_np.shape}")
 
-    mse_vals, ssim_vals, psnr_vals = [], [], []
+    # ----- Compute metrics -----
+    mse_list = []
+    psnr_list = []
+    ssim_list = []
 
     for i in range(num_samples):
-        mse_val = np.mean((test_images_np[i] - reconstructed_np[i]) ** 2)
-        ssim_val = ssim(test_images_np[i], reconstructed_np[i],
-                        channel_axis=-1, data_range=1.0)
-        psnr_val = psnr(test_images_np[i], reconstructed_np[i],
-                        data_range=1.0)
-        mse_vals.append(mse_val)
-        ssim_vals.append(ssim_val)
-        psnr_vals.append(psnr_val)
+        orig = np.clip(test_images[i], 0.0, 1.0)
+        recon = np.clip(reconstructed_np[i], 0.0, 1.0)
 
-    print(f"\nEvaluation on {num_samples} samples:")
-    print(f"  Average MSE  : {np.mean(mse_vals):.6f}")
-    print(f"  Average SSIM : {np.mean(ssim_vals):.4f}")
-    print(f"  Average PSNR : {np.mean(psnr_vals):.2f} dB")
+        mse_val = np.mean((orig - recon) ** 2)
+        psnr_val = psnr(orig, recon, data_range=1.0)
+        ssim_val = ssim(orig, recon, data_range=1.0, channel_axis=-1)
 
-    os.makedirs(save_dir, exist_ok=True)
-    fig, axes = plt.subplots(2, num_samples, figsize=(num_samples * 3, 6))
+        mse_list.append(mse_val)
+        psnr_list.append(psnr_val)
+        ssim_list.append(ssim_val)
+
+    print("\n=== Reconstruction Metrics (per-batch average) ===")
+    print(f"MSE  : {np.mean(mse_list):.6f}")
+    print(f"PSNR : {np.mean(psnr_list):.3f} dB")
+    print(f"SSIM : {np.mean(ssim_list):.4f}")
+
+    # ----- Save side-by-side comparison plots -----
     for i in range(num_samples):
-        axes[0, i].imshow(np.clip(test_images_np[i], 0, 1))
-        axes[0, i].set_title("Original")
-        axes[0, i].axis("off")
+        orig = np.clip(test_images[i], 0.0, 1.0)
+        recon = np.clip(reconstructed_np[i], 0.0, 1.0)
 
-        axes[1, i].imshow(np.clip(reconstructed_np[i], 0, 1))
-        axes[1, i].set_title("Reconstructed")
-        axes[1, i].axis("off")
+        fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+        axes[0].imshow(orig)
+        axes[0].set_title("Original")
+        axes[0].axis("off")
 
-        comparison_path = os.path.join(save_dir, f"comparison_{i+1}.png")
-        fig_i, ax_i = plt.subplots(1, 2, figsize=(6, 3))
-        ax_i[0].imshow(np.clip(test_images_np[i], 0, 1))
-        ax_i[0].set_title("Original")
-        ax_i[0].axis("off")
-        ax_i[1].imshow(np.clip(reconstructed_np[i], 0, 1))
-        ax_i[1].set_title("Reconstructed")
-        ax_i[1].axis("off")
-        plt.tight_layout()
-        fig_i.savefig(comparison_path)
-        plt.close(fig_i)
+        axes[1].imshow(recon)
+        axes[1].set_title("Reconstructed")
+        axes[1].axis("off")
 
-    plt.tight_layout()
-    plt.show()
-    print(f"Saved comparison images to: {os.path.abspath(save_dir)}")
+        fig.suptitle(
+            f"Sample {i} | MSE: {mse_list[i]:.5f}, "
+            f"PSNR: {psnr_list[i]:.2f}dB, SSIM: {ssim_list[i]:.3f}"
+        )
+
+        out_path = os.path.join(save_dir, f"comparison_{i}.png")
+        plt.savefig(out_path, bbox_inches="tight")
+        plt.close(fig)
+        print(f"Saved comparison for comparison_{i} to: {out_path}")
+
+    print("\nTest run complete.")
 
 
 if __name__ == "__main__":
-    test_decoder(
-        model_path="D:/opencv-project/models/decoder_checkpoints/decoder_final.h5",
-        num_samples=4,
-        save_dir="results"
-    )
+    test_decoder()

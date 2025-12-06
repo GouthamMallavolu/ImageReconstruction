@@ -1,11 +1,18 @@
 import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+
 import numpy as np
 import tensorflow as tf
 from src.encoder import build_encoder
 from src.dataset import load_celeba_hq
 
 
-def extract_and_save_features(save_dir="D:/opencv-project/src/data/features", batch_size=8, max_batches=None):
+def extract_and_save_features(save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/data/features", batch_size=8, max_batches=None):
     """
     Extract encoder features for ALL images in CelebA-HQ and save as .npy files.
     Each .npy pair corresponds to one batch (feat_XXXXX.npy, img_XXXXX.npy).
@@ -54,4 +61,4 @@ def extract_and_save_features(save_dir="D:/opencv-project/src/data/features", ba
 
 
 if __name__ == "__main__":
-    extract_and_save_features(save_dir="D:/opencv-project/src/data/features", batch_size=8, max_batches=None)
+    extract_and_save_features(save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/data/features", batch_size=8, max_batches=None)

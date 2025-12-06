@@ -1,91 +1,160 @@
 import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+import json
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
+
+from tensorflow.keras.optimizers import Adam
+
+from src.encoder import build_encoder
 from src.decoder import build_decoder
-from src.extract_features import extract_and_save_features
+from src.dataset import load_celeba_hq
 
 
-def make_dataset(feature_dir):
+def build_autoencoder(input_image_shape=(224, 224, 3)):
     """
-    Build a tf.data.Dataset that streams all precomputed feature and image .npy batches.
+    Build an autoencoder model:
+
+        inputs (images) -> encoder (frozen) -> decoder -> reconstruction
     """
-    feature_files = sorted([f for f in os.listdir(feature_dir) if f.startswith("feat_")])
-    image_files = sorted([f for f in os.listdir(feature_dir) if f.startswith("img_")])
+    # Build encoder and freeze it
+    encoder = build_encoder()
+    encoder.trainable = False
 
-    if len(feature_files) == 0 or len(image_files) == 0:
-        raise FileNotFoundError("No precomputed .npy feature or image files found in data/features")
+    # Get encoder output shape, e.g. (56, 56, 256)
+    enc_feature_shape = encoder.output_shape[1:]
 
-    # Load one batch to infer shapes
-    sample_feat = np.load(os.path.join(feature_dir, feature_files[0]))
-    sample_img = np.load(os.path.join(feature_dir, image_files[0]))
+    # Build decoder that matches encoder feature map shape
+    decoder = build_decoder(input_shape=enc_feature_shape)
 
-    def generator():
-        """Generator to load features and images batch-by-batch from disk."""
-        for f_feat, f_img in zip(feature_files, image_files):
-            X_feats = np.load(os.path.join(feature_dir, f_feat)).astype(np.float32)
-            Y_imgs = np.load(os.path.join(feature_dir, f_img)).astype(np.float32)
-            yield X_feats, Y_imgs
+    # Full autoencoder: image -> encoder -> decoder
+    inputs = tf.keras.Input(shape=input_image_shape, name="autoencoder_input")
+    features = encoder(inputs)
+    recon = decoder(features)
 
-    # Stream batches from disk and prefetch to keep GPU fed
-    ds = tf.data.Dataset.from_generator(
-        generator,
-        output_signature=(
-            tf.TensorSpec(shape=(None, *sample_feat.shape[1:]), dtype=tf.float32),
-            tf.TensorSpec(shape=(None, *sample_img.shape[1:]), dtype=tf.float32),
-        ),
-    ).repeat().prefetch(tf.data.AUTOTUNE)
+    autoencoder = tf.keras.Model(inputs, recon, name="encoder_decoder")
 
-    return ds, sample_feat.shape[1:], len(feature_files)
+    return autoencoder, encoder, decoder
 
 
-def train_model(epochs=20, batch_size=8, feature_dir="D:/opencv-project/src/data/features",
-                save_dir="models/decoder_checkpoints"):
+def ssim_l1_loss(y_true, y_pred, alpha=0.8):
     """
-    Train the decoder network using all precomputed features from the dataset.
-    Automatically adjusts to number of batches present in feature_dir.
+    Combined MAE + SSIM loss.
+    alpha: weight for L1; (1 - alpha) for SSIM component.
+    Images are assumed to be in [0, 1].
+    """
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+
+    # L1 / MAE
+    l1 = tf.reduce_mean(tf.abs(y_true - y_pred))
+
+    # SSIM returns similarity in [-1, 1]; we want a loss in [0, 2]
+    ssim_val = tf.image.ssim(y_true, y_pred, max_val=1.0)
+    ssim_loss = 1.0 - tf.reduce_mean(ssim_val)  # 0 = perfect, 1 = bad
+
+    return alpha * l1 + (1.0 - alpha) * ssim_loss
+
+
+def train_model(
+    epochs=10,
+    batch_size=8,
+    save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/models/decoder_checkpoints",
+    steps_per_epoch_max=10000,
+):
+    """
+    Train the decoder (via an autoencoder) on CelebA-HQ.
+
+    - epochs:              number of training epochs
+    - batch_size:          batch size for the dataset
+    - save_dir:            where to store decoder weights and logs
+    - steps_per_epoch_max: optional cap on steps/epoch for training time
     """
     os.makedirs(save_dir, exist_ok=True)
 
-    # --- GPU configuration ---
-    gpus = tf.config.list_physical_devices('GPU')
-    if gpus:
-        tf.config.experimental.set_memory_growth(gpus[0], True)
-        print("Using GPU with float32 precision.")
-    else:
-        print("No GPU found — running on CPU.")
+    print("\n=== Training Decoder Model (Keras model.fit) ===\n")
 
-    # --- If no features exist, extract them from full dataset ---
-    if not os.path.exists(feature_dir) or len(os.listdir(feature_dir)) == 0:
-        print("No precomputed features found. Extracting from dataset...")
-        extract_and_save_features(save_dir=feature_dir, batch_size=batch_size, max_batches=None)
+    # 1. Build autoencoder (encoder frozen, decoder trainable)
+    autoencoder, encoder, decoder = build_autoencoder()
+    autoencoder.summary()
 
-    # --- Prepare dataset ---
-    ds, input_shape, num_batches = make_dataset(feature_dir)
+    # Try to warm-start from existing decoder weights, if they exist
+    weight_path = os.path.join(save_dir, "decoder_final.h5")
+    if os.path.isfile(weight_path):
+        try:
+            decoder.load_weights(weight_path)
+            print(f"Loaded existing decoder weights from {weight_path} (fine-tuning).")
+        except Exception as e:
+            print(f"Could not load existing decoder weights: {e}")
 
-    print(f"Found {num_batches} feature-image batch pairs in '{feature_dir}'.")
-
-    # --- Build and compile decoder ---
-    decoder = build_decoder(input_shape=input_shape)
-    decoder.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), loss='mse')
-
-    print(f"Starting training for {epochs} epochs ({num_batches} steps/epoch)...")
-
-    # --- Train model ---
-    history = decoder.fit(
-        ds,
-        epochs=epochs,
-        steps_per_epoch=num_batches,
-        verbose=1  # Show Keras progress bar
+    # 2.
+    autoencoder.compile(
+        optimizer=Adam(1e-4),
+        loss=ssim_l1_loss,
     )
 
-    # --- Save trained model ---
-    model_path = os.path.join(save_dir, "decoder_final.h5")
-    decoder.save(model_path)
-    print("Training complete.")
-    print("Model saved at:", os.path.abspath(model_path))
+    # 3. Load dataset (images only)
+    print("Loading dataset...")
+    train_ds = load_celeba_hq(batch_size=batch_size, img_size=(224, 224))
 
-    return decoder, history
+    # Turn it into (inputs, targets) = (x, x) for autoencoder training
+    train_ds = train_ds.map(lambda x: (x, x))
+    train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
+
+    # Determine steps per epoch by dataset cardinality
+    cardinality = tf.data.experimental.cardinality(train_ds).numpy()
+    if cardinality == tf.data.experimental.INFINITE_CARDINALITY:
+        steps_per_epoch = steps_per_epoch_max
+    else:
+        steps_per_epoch = int(cardinality)
+
+    if steps_per_epoch_max is not None:
+        steps_per_epoch = min(steps_per_epoch, steps_per_epoch_max)
+
+    print(f"Steps per epoch: {steps_per_epoch}")
+
+    # 4. Train with standard Keras progress bar
+    history = autoencoder.fit(
+        train_ds,
+        epochs=epochs,
+        steps_per_epoch=steps_per_epoch,
+        verbose=1,
+    )
+
+    # 5. Save decoder weights (encoder is fixed)
+    final_decoder_path = os.path.join(save_dir, "decoder_final.h5")
+    decoder.save_weights(final_decoder_path)
+    print(f"\nTraining complete. Decoder weights saved at: {final_decoder_path}")
+
+    # 6. Save loss history
+    loss_history = history.history.get("loss", [])
+    history_path = os.path.join(save_dir, "loss_history.json")
+    with open(history_path, "w") as f:
+        json.dump({"loss": loss_history}, f, indent=4)
+    print(f"Saved training loss history at: {history_path}")
+
+    # 7. Plot loss curve
+    if loss_history:
+        plt.figure(figsize=(8, 5))
+        plt.plot(loss_history, marker="o")
+        plt.title("Training Loss Curve (MAE)")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.grid(True)
+
+        plot_path = os.path.join(save_dir, "loss_curve.png")
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Saved loss curve at: {plot_path}")
+
+    return decoder, history.history
 
 
 if __name__ == "__main__":
-    train_model(epochs=20, batch_size=8)
+    train_model(epochs=30, batch_size=8)
