@@ -1,3 +1,16 @@
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10.0-ff6f00)](https://www.tensorflow.org/)
+[![Keras](https://img.shields.io/badge/Keras-API-red)](https://keras.io/)
+[![Streamlit](https://img.shields.io/badge/UI-Streamlit-ff4b4b)](https://streamlit.io/)
+[![Streamlit-webrtc](https://img.shields.io/badge/Realtime-Streamlit--webrtc-ff8800)](https://github.com/whitphx/streamlit-webrtc)
+[![OpenCV](https://img.shields.io/badge/Computer%20Vision-OpenCV-5c3ee8)](https://opencv.org/)
+[![scikit-image](https://img.shields.io/badge/Image%20Processing-scikit--image-00aaff)](https://scikit-image.org/)
+[![Matplotlib](https://img.shields.io/badge/Plots-Matplotlib-013243)](https://matplotlib.org/)
+[![Dataset](https://img.shields.io/badge/Dataset-CelebA--HQ-673ab7)](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20Apple%20Silicon-333333)](https://www.apple.com/apple-silicon/)
+[![Project Type](https://img.shields.io/badge/Task-Image%20Reconstruction-brightgreen)](#)
+[![Status](https://img.shields.io/badge/Status-Completed-success)](#)
+
 # CAP6415-Project-ImageReconstruction
 Input image reconstruction from features (small network)
 
