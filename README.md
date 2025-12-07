@@ -570,12 +570,15 @@ Avoid contradictory manual settings (e.g., too small `steps_per_epoch`
 combined with caching) that can cause "input ran out of data" warnings.
 
 # Testing model performance
-<img width="2310" height="978" alt="image" src="https://github.com/user-attachments/assets/68f4bb0a-dde1-4044-8504-2cd9028ed001" />
+<img width="600" height="600" alt="image" src="https://github.com/user-attachments/assets/9d4daed6-cbf7-47a2-9114-c3c7217e21f7" />, <img width="600" height="600" alt="image" src="https://github.com/user-attachments/assets/c26873a4-7ded-4f19-a12b-061066ee35af" />
+
+
 
 # Model Evaluation
-<img width="1090" height="780" alt="image" src="https://github.com/user-attachments/assets/41d7de51-4bc8-4f6c-8833-655a076a704a" />
-<img width="1060" height="790" alt="image" src="https://github.com/user-attachments/assets/dea419e1-dcaf-489b-8289-56bdb65ac18d" />
-<img width="1092" height="792" alt="image" src="https://github.com/user-attachments/assets/ef629e0e-b218-480c-b153-18707fc4c120" />
+<img width="800" height="700" alt="image" src="https://github.com/user-attachments/assets/68f4bb0a-dde1-4044-8504-2cd9028ed001" />
+<img width="600" height="600" alt="image" src="https://github.com/user-attachments/assets/41d7de51-4bc8-4f6c-8833-655a076a704a" />
+<img width="600" height="600" alt="image" src="https://github.com/user-attachments/assets/dea419e1-dcaf-489b-8289-56bdb65ac18d" />
+<img width="600" height="600" alt="image" src="https://github.com/user-attachments/assets/ef629e0e-b218-480c-b153-18707fc4c120" />
 
 # Limitations and Future Work
 
@@ -588,7 +591,7 @@ combined with caching) that can cause "input ran out of data" warnings.
 
 -   **Face-Only Training**:
 
-    -   Trained only on CelebA-HQ faces; generalization to non-face data
+    -   Trained only on CelebA-HQ faces; generalisation to non-face data
         is limited.
 
 -   **Fixed Resolution**:
@@ -616,11 +619,12 @@ combined with caching) that can cause "input ran out of data" warnings.
 
     -   Compare different checkpoints.
 
-    -   Visualize error maps.
+    -   Visualise error maps.
 
     -   Toggle between different loss configurations.
 
-# End-to-End Usage Summary
+# Reproducibility
+## End-to-End Usage Summary
 
 1.  **Clone the repository**
 
@@ -639,42 +643,60 @@ combined with caching) that can cause "input ran out of data" warnings.
 
 3.  **Prepare the dataset**
 
-    -   Place CelebA-HQ images under `data/celeba_hq/`.
+    -   Place CelebA-HQ images under `src/dataset/celeba_hq/`.
 
 4.  **Verify the dataset loader**
 
     ``` {.bash language="bash"}
     python src/dataset.py
     ```
+    
+5.  **Extract features for making training easier**
 
-5.  **Train the model**
+    ``` {.bash language="bash"}
+    python src/extract_features.py
+    ```
+
+6.  **Train the model**
 
     ``` {.bash language="bash"}
     python src/train.py
     ```
-    <img width="1512" height="982" alt="Screenshot 2025-12-06 at 12 16 57 PM" src="https://github.com/user-attachments/assets/2f55fd8b-c02b-4156-8c8e-a1c83e53175e" />
+    <img width="700" height="800" alt="Screenshot 2025-12-06 at 12 16 57 PM" src="https://github.com/user-attachments/assets/2f55fd8b-c02b-4156-8c8e-a1c83e53175e" />
 
-6.  **Test the model**
+7.  **Test the model**
 
     ``` {.bash language="bash"}
     python src/test_model.py
     ```
+    <img width="700" height="800" alt="image" src="https://github.com/user-attachments/assets/6e29227e-4b85-4c4f-8751-351cd2e65d46" />
     
-7.  **Evaluate the model**
+8.  **Evaluate the model**
 
     ``` {.bash language="bash"}
     python src/evaluate.py
     ```
+    <img width="700" height="800" alt="image" src="https://github.com/user-attachments/assets/2a6107a6-9b8a-4ffe-82a0-baa2ba133509" />
 
-8.  **Run the UI**
+9.  **Run the UI**
 
     ``` {.bash language="bash"}
     python -m streamlit run app/ui_app.py
     ```
-    <img width="3024" height="1964" alt="image" src="https://github.com/user-attachments/assets/53ffef9b-fd31-4c88-99d7-80e286b54220" />
+    <img width="700" height="800" alt="image" src="https://github.com/user-attachments/assets/53ffef9b-fd31-4c88-99d7-80e286b54220" />
 
 
-Following these steps with the pinned environment, dataset layout, and
+Following these steps with the newly created conda environment, dataset layout, and
 scripts will reproduce the training behavior, evaluation metrics, and
 interactive demo for image reconstruction from CNN features using a
 small decoder network.
+
+Thankyou
+
+## Authors
+
+- **Goutham Mallavolu**
+- **Maahir Mitayeegiri**
+
+---
+© 2025 This project was created as part of Florida Atlantic University, CAP 6415 Computer Vision course Project.
