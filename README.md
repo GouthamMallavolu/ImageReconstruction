@@ -186,7 +186,8 @@ Key pinned packages:
 These versions avoid common compatibility issues such as NumPy /
 TensorFlow ABI mismatches and Protobuf descriptor errors.
 
-# Dataset: CelebA-HQ
+# Download Dataset
+**CelebA-HQ**: https://www.kaggle.com/datasets/lamsimon/celebahq?resource=download-directory&select=celeba_hq
 
 ## Data Layout
 
