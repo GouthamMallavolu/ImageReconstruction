@@ -641,18 +641,19 @@ combined with caching) that can cause "input ran out of data" warnings.
     ```
     <img width="1512" height="982" alt="Screenshot 2025-12-06 at 12 16 57 PM" src="https://github.com/user-attachments/assets/2f55fd8b-c02b-4156-8c8e-a1c83e53175e" />
 
-
-6.  **Evaluate the model**
+6.  **Test the model**
 
     ``` {.bash language="bash"}
-    python src/evaluate.py \
-      --weights src/models/decoder_checkpoints/decoder_final.h5 \
-      --num-samples 300 \
-      --batch-size 8 \
-      --save-dir outputs/eval_run1
+    python src/test_model.py
+    ```
+    
+7.  **Evaluate the model**
+
+    ``` {.bash language="bash"}
+    python src/evaluate.py
     ```
 
-7.  **Run the UI**
+8.  **Run the UI**
 
     ``` {.bash language="bash"}
     python -m streamlit run app/ui_app.py
