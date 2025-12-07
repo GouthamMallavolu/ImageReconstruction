@@ -23,7 +23,7 @@ It also includes a Streamlit-based user interface that allows you to upload or c
 
 ## Abstract
 
-This project investigates **image reconstruction from intermediate convolutional features using a small decoder network**. Instead of training a large end-to-end autoencoder, we freeze a lightweight convolutional encoder and learn only a compact decoder that maps feature maps back to the image domain. Concretely, we use a convolutional backbone to extract feature tensors of size \(56 \times 56 \times 256\) from face images, and train a decoder composed of strided transposed convolutions and residual blocks to reconstruct \(224 \times 224 \times 3\) RGB images. Training is performed on the **CelebA-HQ** face dataset (30k high-quality face images), a widely used benchmark for generative modeling and face synthesis.
+This project investigates **image reconstruction from intermediate convolutional features using a small decoder network**. Instead of training a large end-to-end autoencoder, we freeze a lightweight convolutional encoder and learn only a compact decoder that maps feature maps back to the image domain. Concretely, we use a convolutional backbone to extract feature tensors of size 56 X 56 X 256 from face images, and train a decoder composed of strided transposed convolutions and residual blocks to reconstruct 224 X 224 X 3 RGB images. Training is performed on the **CelebA-HQ** face dataset (30k high-quality face images), a widely used benchmark for generative modeling and face synthesis.
 
 The decoder is optimized with mean absolute error (MAE) in pixel space, while evaluation uses a richer set of metrics: **PSNR**, **SSIM**, and **LPIPS**. SSIM provides a perceptually motivated measure of structural fidelity, and LPIPS compares deep feature activations from pretrained networks, which correlates better with human judgments than traditional distortion metrics. We conduct experiments on full-resolution face images and report both numerical scores and qualitative side-by-side reconstructions. Results show that even a relatively small decoder, trained only on frozen mid-level features, can recover the global structure and identity of faces, though fine details, contrast, and high-frequency textures remain challenging.
 
@@ -39,7 +39,7 @@ feature maps** using a **small, resource-efficient decoder network**.
 -   The **encoder** is a frozen convolutional feature extractor.
 
 -   The **decoder** is a compact convolutional network trained to
-    reconstruct the original $224\times224$ RGB image from encoder
+    reconstruct the original 224 X 224 RGB image from encoder
     feature maps.
 
 The project provides:
@@ -68,7 +68,7 @@ end-to-end workflow.
 
 1.  **Feature-to-Image Reconstruction**\
     Given an intermediate feature map from a CNN encoder, learn a
-    decoder that can reconstruct the original $224\times224$ RGB image.
+    decoder that can reconstruct the original 224 X 224 RGB image.
 
 2.  **Small Network Constraint**\
     Keep the decoder relatively small (hundreds of thousands of
