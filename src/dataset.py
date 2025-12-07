@@ -8,7 +8,7 @@ if PROJECT_ROOT not in sys.path:
 import os
 import tensorflow as tf
 
-DATA_DIR = "/Users/goutham/PycharmProjects/ComputerVision/dataset/celeba_hq"
+DATA_DIR = "dataset/celeba_hq"
 
 
 def load_celeba_hq(batch_size=8, img_size=(224, 224)):

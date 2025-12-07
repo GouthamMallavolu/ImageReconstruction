@@ -12,7 +12,7 @@ from src.encoder import build_encoder
 from src.dataset import load_celeba_hq
 
 
-def extract_and_save_features(save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/data/features", batch_size=8, max_batches=None):
+def extract_and_save_features(save_dir="src/data/features", batch_size=8, max_batches=None):
     """
     Extract encoder features for ALL images in CelebA-HQ and save as .npy files.
     Each .npy pair corresponds to one batch (feat_XXXXX.npy, img_XXXXX.npy).
@@ -30,13 +30,13 @@ def extract_and_save_features(save_dir="/Users/goutham/PycharmProjects/ComputerV
     encoder.trainable = False
 
     # --- Load dataset ---
-    dataset = load_celeba_hq(batch_size=batch_size, shuffle=True)
+    dataset = load_celeba_hq(batch_size=batch_size)
     total_images = 0
     batch_count = 0
 
     print("Extracting features for full dataset...")
 
-    for i, (images, _) in enumerate(dataset):
+    for i, images in enumerate(dataset):
         feats = encoder(images).numpy().astype(np.float32)
 
         # Normalize features to stabilize decoder training
@@ -61,4 +61,4 @@ def extract_and_save_features(save_dir="/Users/goutham/PycharmProjects/ComputerV
 
 
 if __name__ == "__main__":
-    extract_and_save_features(save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/data/features", batch_size=8, max_batches=None)
+    extract_and_save_features(save_dir="src/data/features", batch_size=8, max_batches=None)

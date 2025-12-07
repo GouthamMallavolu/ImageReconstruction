@@ -65,7 +65,7 @@ def ssim_l1_loss(y_true, y_pred, alpha=0.8):
 def train_model(
     epochs=10,
     batch_size=8,
-    save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/models/decoder_checkpoints",
+    save_dir="src/models/decoder_checkpoints",
     steps_per_epoch_max=10000,
 ):
     """

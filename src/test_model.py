@@ -30,9 +30,9 @@ def configure_gpu():
 
 
 def test_decoder(
-    model_dir="/Users/goutham/PycharmProjects/ComputerVision/src/models/decoder_checkpoints",
+    model_dir="src/models/decoder_checkpoints",
     num_samples=4,
-    save_dir="/Users/goutham/PycharmProjects/ComputerVision/src/results/test_run",
+    save_dir="src/results/test_run",
 ):
     """
     Load the trained encoder + decoder, run reconstruction on a few images,

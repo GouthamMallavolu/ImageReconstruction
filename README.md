@@ -116,7 +116,7 @@ The repository layout is:
     │   └── evaluate.py                 # Evaluation: MSE/PSNR/SSIM + plots
     ├── app/
     │   └── ui_app.py                   # Streamlit UI: upload + webcam reconstruction
-    ├── data/
+    ├── dataset/
     │   └── celeba_hq/                  # CelebA-HQ images (30,000)
     └── outputs/
         └── evaluation/                 # Metrics & plots from evaluate.py
@@ -193,7 +193,7 @@ TensorFlow ABI mismatches and Protobuf descriptor errors.
 The project uses **CelebA-HQ**, a dataset of high-quality face images.
 Place the images as:
 
-    CAP6415-Project-ImageReconstruction/data/celeba_hq/
+    CAP6415-Project-ImageReconstruction/dataset/celeba_hq/
         00001.png
         00002.png
         ...
@@ -206,7 +206,7 @@ pool of face images.
 
 The loader uses `tf.keras.utils.image_dataset_from_directory` to:
 
--   Read all images under `data/celeba_hq/`.
+-   Read all images under `dataset/celeba_hq/`.
 
 -   Resize each image to $224\times224$.
 
@@ -537,7 +537,7 @@ but this significantly stabilizes the training outcome.
 
 To reproduce results:
 
--   Use the same CelebA-HQ dataset in `data/celeba_hq/`.
+-   Use the same CelebA-HQ dataset in `dataset/celeba_hq/`.
 
 -   Do not change the number or identity of images.
 
@@ -643,7 +643,7 @@ combined with caching) that can cause "input ran out of data" warnings.
 
 3.  **Prepare the dataset**
 
-    -   Place CelebA-HQ images under `src/dataset/celeba_hq/`.
+    -   Place CelebA-HQ images under `dataset/celeba_hq/`.
 
 4.  **Verify the dataset loader**
 
