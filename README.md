@@ -281,9 +281,6 @@ Key pinned packages:
 These versions avoid common compatibility issues such as NumPy /
 TensorFlow ABI mismatches and Protobuf descriptor errors.
 
-# Download Dataset
-**CelebA-HQ**: https://www.kaggle.com/datasets/lamsimon/celebahq?resource=download-directory&select=celeba_hq
-
 ## Data Layout
 
 The project uses **CelebA-HQ**, a dataset of high-quality face images.
@@ -739,6 +736,9 @@ combined with caching) that can cause "input ran out of data" warnings.
 
 3.  **Prepare the dataset**
 
+   - **Download Dataset**
+     **CelebA-HQ**: https://www.kaggle.com/datasets/lamsimon/celebahq?resource=download-directory&select=celeba_hq
+
     -   Place CelebA-HQ images under `dataset/celeba_hq/`.
 
 4.  **Verify the dataset loader**
@@ -803,13 +803,12 @@ small decoder network.
 
 6. **Autoencoder**. Wikipedia, The Free Encyclopedia. Accessed 2024. (Overview of autoencoders and their use for unsupervised representation learning and reconstruction.)
 
-
-Thankyou
+---
 
 ## Authors
 
-- **Goutham Mallavolu**
-- **Maahir Mitayeegiri**
+- **Goutham Mallavolu** - gmallavolu2024@fau.edu
+- **Maahir Mitayeegiri** - mmitayeegiri2024@fau.edu
 
 ---
 © 2025 This project was created as part of Florida Atlantic University, CAP 6415 Computer Vision course Project.
