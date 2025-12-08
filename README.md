@@ -21,6 +21,103 @@ It also includes a Streamlit-based user interface that allows you to upload or c
 
 ---
 
+# Table of Contents
+
+1. [Abstract](#abstract)
+2. [Introduction](#introduction)
+
+3. <details>
+   <summary><strong>Project Goals and Motivation</strong></summary>
+
+   - [Goals](#goals)
+   - [Motivation](#motivation)
+   </details>
+
+4. [Repository Structure](#repository-structure)
+
+5. <details>
+   <summary><strong>Environment Setup</strong></summary>
+
+   - [Target Platform](#target-platform)
+   - [Conda Environment](#conda-environment)
+   - [Python Dependencies](#python-dependencies)
+   </details>
+
+6. <details>
+   <summary><strong>Download Dataset</strong></summary>
+
+   - [Data Layout](#data-layout)
+   - [Dataset Loader (`dataset.py`)](#dataset-loader-datasetpy)
+   - [Dataset Cardinality](#dataset-cardinality)
+   </details>
+
+7. <details>
+   <summary><strong>Model Architecture</strong></summary>
+
+   - [Encoder (`encoder.py`)](#encoder-encoderpy)
+   - [Decoder (`decoder.py`)](#decoder-decoderpy)
+   - [Autoencoder Assembly](#autoencoder-assembly)
+   </details>
+
+8. <details>
+   <summary><strong>Loss Function and Training Objective</strong></summary>
+
+   - [Combined SSIM + L1 Loss](#combined-ssim--l1-loss)
+   - [Optimization](#optimization)
+   </details>
+
+9. <details>
+   <summary><strong>Training the Model</strong></summary>
+
+   - [Using All 30,000 Images per Epoch](#using-all-30000-images-per-epoch)
+   - [Final Training Pattern](#final-training-pattern)
+   - [Training Script Usage](#training-script-usage)
+   </details>
+
+10. <details>
+    <summary><strong>Evaluation</strong></summary>
+
+    - [Evaluation Script (`evaluate.py`)](#evaluation-script-evaluatepy)
+    - [Quick Test (`test_model.py`)](#quick-test-test_modelpy)
+    </details>
+
+11. <details>
+    <summary><strong>Interactive UI</strong></summary>
+
+    - [Streamlit App (`ui_app.py`)](#streamlit-app-ui_apppy)
+    - [Features](#features)
+    </details>
+
+12. <details>
+    <summary><strong>Reproducibility</strong></summary>
+
+    - [Environment](#environment)
+    - [Random Seeds](#random-seeds)
+    - [Dataset Consistency](#dataset-consistency)
+    - [Training Hyperparameters](#training-hyperparameters)
+    - [Steps per Epoch](#steps-per-epoch)
+    </details>
+
+13. [Testing Model Performance](#testing-model-performance)
+
+14. [Model Evaluation](#model-evaluation)
+
+15. <details>
+    <summary><strong>Limitations and Future Work</strong></summary>
+
+    - [Current Limitations](#current-limitations)
+    - [Future Extensions](#future-extensions)
+    </details>
+
+16. [Reproducibility Summary](#end-to-end-usage-summary)
+
+17. [References](#references)
+
+18. [Authors](#authors)
+
+
+---
+
 ## Abstract
 
 This project investigates **image reconstruction from intermediate convolutional features using a small decoder network**. Instead of training a large end-to-end autoencoder, we freeze a lightweight convolutional encoder and learn only a compact decoder that maps feature maps back to the image domain. Concretely, we use a convolutional backbone to extract feature tensors of size 56 X 56 X 256 from face images, and train a decoder composed of strided transposed convolutions and residual blocks to reconstruct 224 X 224 X 3 RGB images. Training is performed on the **CelebA-HQ** face dataset (30k high-quality face images), a widely used benchmark for generative modeling and face synthesis.
