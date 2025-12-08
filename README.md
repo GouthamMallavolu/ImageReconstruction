@@ -21,7 +21,7 @@ It also includes a Streamlit-based user interface that allows you to upload or c
 
 ---
 
-# Table of Contents
+## Table of Contents
 
 1. [Abstract](#abstract)
 2. [Introduction](#introduction)
