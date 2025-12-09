@@ -147,6 +147,8 @@ memory constraints (Apple Silicon, 16GB RAM), while maintaining
 reasonable reconstruction quality and providing a reproducible
 end-to-end workflow.
 
+<img width="313" height="440" alt="image" src="https://github.com/user-attachments/assets/4eac81a4-86fd-4fe2-9520-378e87c1deb6" />
+
 # Project Goals and Motivation
 
 ## Goals
