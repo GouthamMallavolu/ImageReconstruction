@@ -11,7 +11,7 @@
 [![Project Type](https://img.shields.io/badge/Task-Image%20Reconstruction-brightgreen)](#)
 [![Status](https://img.shields.io/badge/Status-Completed-success)](#)
 
-# CAP6415-F25-Project-ImageReconstruction
+# Project-ImageReconstruction
 Input image reconstruction from features (small network)
 - **Video PPT Presentation and Code Demo** : https://youtu.be/YzsRktf5dVI?si=K3JNTEeE23hOux2H
 - **Documentation** : https://fau-my.sharepoint.com/:w:/g/personal/mmitayeegiri2024_fau_edu/IQC6R7wd59K5SbGaf26PDk2AAR5ckQtbKM0Hxw2__gFW8pc?e=aUlaMo
